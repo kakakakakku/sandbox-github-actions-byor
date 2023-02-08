@@ -1,0 +1,43 @@
+name: Build Your Own Radar (BYOR)
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      byor:
+        image: wwwthoughtworks/build-your-own-radar
+        ports:
+          - 80:80
+        volumes:
+          - /files/:/opt/build-your-own-radar/files
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+      - name: Set up Playwright
+        run: |
+          playwright install
+      - name: Wait for BYOR container running
+        run: |
+          # Wait for launching container
+          sleep 60
+          sudo cp -p ${GITHUB_WORKSPACE}/files/* /files
+      - name: Build radar
+        run: |
+          python byor.py
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: byor-artifacts
+          path: artifacts/
+          retention-days: 90
